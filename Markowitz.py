@@ -63,6 +63,15 @@ class EqualWeightPortfolio:
         TODO: Complete Task 1 Below
         """
 
+        # Number of assets included in the portfolio (excluding SPY)
+        n_assets = len(assets)
+
+        # Equal weight for each asset
+        equal_weight = 1.0 / n_assets
+
+        # Assign the same weight to all dates for all selected assets
+        self.portfolio_weights.loc[:, assets] = equal_weight
+
         """
         TODO: Complete Task 1 Above
         """
@@ -113,6 +122,7 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
+
 
 
 
