@@ -122,7 +122,24 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
+        # start from (lookback + 1) so that we always have at least `lookback` days of history
+        for i in range(self.lookback + 1, len(df)):
+            # Use past `lookback` days of returns for the selected assets
+            # Shape: (lookback, number_of_assets)
+            window_returns = df_returns.copy()[assets].iloc[i - self.lookback : i]
 
+            # Compute volatility (standard deviation) for each asset over the lookback window
+            vol = window_returns.std()
+
+            # Avoid division by zero, add a very small epsilon
+            epsilon = 1e-8
+            inv_vol = 1.0 / (vol + epsilon)
+
+            # Normalize inverse volatilities so that the weights sum to 1
+            weights = inv_vol / inv_vol.sum()
+
+            # Assign the weights to the current date (row i) for the selected assets
+            self.portfolio_weights.loc[df.index[i], assets] = weights.values
         """
         TODO: Complete Task 2 Above
         """
