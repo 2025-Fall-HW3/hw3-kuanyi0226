@@ -123,9 +123,6 @@ class RiskParityPortfolio:
         TODO: Complete Task 2 Below
         """
 
-
-
-
         """
         TODO: Complete Task 2 Above
         """
@@ -203,6 +200,18 @@ class MeanVariancePortfolio:
                 w = model.addMVar(n, name="w", ub=1)
                 model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
 
+                # Linear part of the objective: expected return w^T * mu
+                lin_obj = w @ mu
+
+                # Quadratic part of the objective: - (gamma / 2) * w^T * Sigma * w
+                # Note: Gurobi maximizes by default when we set GRB.MAXIMIZE.
+                quad_obj = -0.5 * gamma * (w @ Sigma @ w)
+
+                # Total objective: maximize risk-adjusted return
+                model.setObjective(lin_obj + quad_obj, gp.GRB.MAXIMIZE)
+
+                # Constraint: sum of weights must equal 1 (fully invested, no leverage)
+                model.addConstr(w.sum() == 1.0, name="budget")
                 """
                 TODO: Complete Task 3 Above
                 """
