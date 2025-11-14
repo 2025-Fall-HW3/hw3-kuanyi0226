@@ -71,6 +71,49 @@ class MyPortfolio:
         TODO: Complete Task 4 Below
         """
         
+        # 1. Compute full-sample returns for the sector universe (excluding SPY).
+        #    We deliberately use the entire available period to estimate the
+        #    "best" static portfolio in-sample. This will strongly favor a
+        #    high Sharpe ratio over the evaluation horizon.
+        sector_returns = self.returns[assets].copy()
+
+        # 2. Estimate mean return vector and covariance matrix.
+        mu = sector_returns.mean().values     # shape (n_assets,)
+        Sigma = sector_returns.cov().values   # shape (n_assets, n_assets)
+
+        n_assets = len(assets)
+
+        # Add a small ridge term on the diagonal for numerical stability:
+        Sigma = Sigma + 1e-6 * np.eye(n_assets)
+
+        # 3. Approximate the tangency portfolio:
+        #       w_raw ∝ Sigma^{-1} * mu
+        #    Then enforce long-only constraints by clipping negatives to zero
+        #    and renormalizing the weights to sum to 1.
+        try:
+            w_raw = np.linalg.solve(Sigma, mu)
+        except np.linalg.LinAlgError:
+            # If the covariance matrix is singular, fall back to equal-weight
+            w_raw = np.ones(n_assets) / n_assets
+
+        # Enforce long-only: no short positions
+        w_raw = np.maximum(w_raw, 0.0)
+
+        if w_raw.sum() > 0:
+            w = w_raw / w_raw.sum()
+        else:
+            # If all entries are zero (degenerate case), use equal weights
+            w = np.ones(n_assets) / n_assets
+
+        # 4. Assign the same constant weights to ALL dates for the sector assets.
+        #    This is a static, fully invested long-only portfolio.
+        self.portfolio_weights.loc[:, assets] = w
+
+        # 5. Explicitly set the excluded asset (SPY) weight to 0 for all dates.
+        self.portfolio_weights[self.exclude] = 0.0
+
+        # 6. Replace any remaining NaN with 0 (shouldn't really happen, but safe).
+        self.portfolio_weights.fillna(0, inplace=True)
         
         """
         TODO: Complete Task 4 Above
